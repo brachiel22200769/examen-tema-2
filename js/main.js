@@ -7,7 +7,6 @@ document.body.style.backgroundImage = "url('cocina.jpg')";
 document.body.style.backgroundSize = "100% 100%";  
 document.body.style.backgroundRepeat = "no-repeat";
 document.body.style.backgroundPosition = "center";
-
 document.body.style.display = "flex";
 document.body.style.flexDirection = "column";
 document.body.style.justifyContent = "center";
@@ -15,7 +14,6 @@ document.body.style.alignItems = "center";
 document.body.style.height = "100vh";
 document.body.style.margin = "0";
 document.body.style.fontFamily = "Arial, sans-serif";
-
 document.body.style.cursor = "url('mata.png') 25 25, auto";
 
 const title = document.createElement("h1");
@@ -77,6 +75,9 @@ document.body.appendChild(scoreDiv);
 const flyImage = new Image();
 flyImage.src = "mosca.jpg";
 
+const hitSound = new Audio("golpe.mp3");
+const gameOverSound = new Audio("gameover.mp3");
+
 class Fly {
     constructor(x, y, size, speed) {
         this.x = x;
@@ -95,6 +96,7 @@ class Fly {
         if (this.y < 0 || this.y + this.size > theCanvas.height) this.dy *= -1;
     }
 }
+
 let gameOverDiv = document.createElement("div");
 gameOverDiv.style.position = "absolute";
 gameOverDiv.style.top = "50%";
@@ -111,16 +113,23 @@ gameOverDiv.style.boxShadow = "0 5px 15px rgba(255, 99, 71, 0.7)";
 gameOverDiv.style.textShadow = "2px 2px 4px rgba(255, 99, 71, 0.7)";
 gameOverDiv.style.textAlign = "center";
 gameOverDiv.style.zIndex = "20";
-gameOverDiv.style.display = "none"; // Initially hidden
+gameOverDiv.style.display = "none";
 document.body.appendChild(gameOverDiv);
 
 function showGameOver() {
+    gameOverSound.play();
+    backgroundMusic.pause(); //Pausa la música de fondo
+    backgroundMusic.currentTime = 0; //Reinicia la música de fondo
+
+    flySound.pause();
+    flySound.currentTime = 0;
+
     gameOverDiv.innerHTML = `¡Tiempo agotado!<br>Fin del juego.<br>Puntaje final: ${score}<br>`;
     
     let restartButton = document.createElement("button");
     restartButton.innerText = "REINICIAR";
     restartButton.style.fontSize = "20px";
-    restartButton.style.padding = "10px 20px";
+    restartButton.style.padding = "20px 40px";
     restartButton.style.marginTop = "20px";
     restartButton.style.cursor = "pointer";
     restartButton.style.backgroundColor = "#FF6347";
@@ -131,60 +140,72 @@ function showGameOver() {
     restartButton.style.boxShadow = "0 5px 15px rgba(255, 99, 71, 0.7)";
     restartButton.style.textShadow = "2px 2px 4px rgba(255, 99, 71, 0.7)";
     restartButton.style.transition = "all 0.3s ease-in-out";
-    
+
     restartButton.addEventListener("click", () => {
         score = 0;
         level = 1;
         gameOverDiv.style.display = "none";
+        backgroundMusic.play(); //Reanuda la música de fondo
         spawnFlies();
     });
-    
+
     gameOverDiv.appendChild(restartButton);
     gameOverDiv.style.display = "block";
 }
+
 let flies = [];
+
+const flySound = new Audio("sonidomosca.mp3");
+flySound.loop = true;
+flySound.volume = 0.6;
 function spawnFlies() {
     flies = [];
-    for (let i = 0; i < 10; i++) { // Always spawn 10 flies
+    for (let i = 0; i < 10; i++) {
         let size = Math.max(40 - (level - 1) * 5, 20);
         let speed = 2 + (level - 1);
         let x = Math.random() * (theCanvas.width - size);
         let y = Math.random() * (theCanvas.height - size);
         flies.push(new Fly(x, y, size, speed));
     }
-    timeLeft = 30; // Set timeLeft to 30 seconds for each level
+
+    flySound.currentTime = 0;
+    flySound.play();
+
+    timeLeft = 30;
     clearInterval(timerInterval);
     timerInterval = setInterval(() => {
         timeLeft--;
         scoreDiv.innerHTML = `Puntaje: ${score} | Nivel: ${level} | Tiempo: ${timeLeft}s`;
         if (timeLeft <= 0) {
-            showGameOver(); // Show game over message
+            showGameOver();
         }
     }, 1000);
     updateGame();
 }
 
-
 theCanvas.addEventListener("click", (event) => {
     const rect = theCanvas.getBoundingClientRect();
     const mouseX = event.clientX - rect.left;
     const mouseY = event.clientY - rect.top;
-    
+
     flies = flies.filter(fly => {
         let isHit = mouseX > fly.x && mouseX < fly.x + fly.size &&
                     mouseY > fly.y && mouseY < fly.y + fly.size;
         if (isHit) {
+            hitSound.currentTime = 0;
+            hitSound.play();
             score += 10;
             scoreDiv.innerHTML = `Puntaje: ${score} | Nivel: ${level} | Tiempo: ${timeLeft}s`;
         }
         return !isHit;
     });
-    
-    if (flies.length === 0) { // Check if all flies are eliminated
+
+    if (flies.length === 0) {
         level++;
-        spawnFlies(); // Spawn new flies for the next level
+        spawnFlies();
     }
 });
+
 function updateGame() {
     ctx.clearRect(0, 0, theCanvas.width, theCanvas.height);
     flies.forEach(fly => {
@@ -194,20 +215,13 @@ function updateGame() {
     requestAnimationFrame(updateGame);
 }
 
-startButton.addEventListener("mouseover", () => {
-    startButton.style.backgroundColor = "#FFD700"; // Amarillo dorado
-    startButton.style.color = "black";
-    startButton.style.boxShadow = "0 5px 15px rgba(255, 215, 0, 0.7)";
-});
-
-startButton.addEventListener("mouseout", () => {
-    startButton.style.backgroundColor = "#FF6347"; // Rojo tomate (color original)
-    startButton.style.color = "white";
-    startButton.style.boxShadow = "0 5px 15px rgba(255, 99, 71, 0.7)";
-});
+const backgroundMusic = new Audio("sonidofondo.mp3");
+backgroundMusic.loop = true;
+backgroundMusic.volume = 0.5;
 
 startButton.addEventListener("click", () => {
     instructionsDiv.style.display = "none";
     startButton.style.display = "none";
-    spawnFlies(10);
+    backgroundMusic.play(); //Inicia la música de fondo
+    spawnFlies();
 });
