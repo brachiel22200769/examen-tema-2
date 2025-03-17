@@ -59,7 +59,7 @@ document.body.appendChild(startButton);
 
 let score = 0;
 let level = 1;
-let timeLeft = 10;
+let timeLeft = 30;
 let timerInterval = null;
 const scoreFont = "30px Arial";
 
@@ -95,29 +95,75 @@ class Fly {
         if (this.y < 0 || this.y + this.size > theCanvas.height) this.dy *= -1;
     }
 }
+let gameOverDiv = document.createElement("div");
+gameOverDiv.style.position = "absolute";
+gameOverDiv.style.top = "50%";
+gameOverDiv.style.left = "50%";
+gameOverDiv.style.transform = "translate(-50%, -50%)";
+gameOverDiv.style.fontSize = "24px";
+gameOverDiv.style.padding = "20px 40px";
+gameOverDiv.style.backgroundColor = "#FF6347";
+gameOverDiv.style.color = "white";
+gameOverDiv.style.fontWeight = "bold";
+gameOverDiv.style.border = "5px solid #FFD700";
+gameOverDiv.style.borderRadius = "15px";
+gameOverDiv.style.boxShadow = "0 5px 15px rgba(255, 99, 71, 0.7)";
+gameOverDiv.style.textShadow = "2px 2px 4px rgba(255, 99, 71, 0.7)";
+gameOverDiv.style.textAlign = "center";
+gameOverDiv.style.zIndex = "20";
+gameOverDiv.style.display = "none"; // Initially hidden
+document.body.appendChild(gameOverDiv);
 
+function showGameOver() {
+    gameOverDiv.innerHTML = `¡Tiempo agotado!<br>Fin del juego.<br>Puntaje final: ${score}<br>`;
+    
+    let restartButton = document.createElement("button");
+    restartButton.innerText = "REINICIAR";
+    restartButton.style.fontSize = "20px";
+    restartButton.style.padding = "10px 20px";
+    restartButton.style.marginTop = "20px";
+    restartButton.style.cursor = "pointer";
+    restartButton.style.backgroundColor = "#FF6347";
+    restartButton.style.color = "white";
+    restartButton.style.fontWeight = "bold";
+    restartButton.style.border = "5px solid #FFD700";
+    restartButton.style.borderRadius = "15px";
+    restartButton.style.boxShadow = "0 5px 15px rgba(255, 99, 71, 0.7)";
+    restartButton.style.textShadow = "2px 2px 4px rgba(255, 99, 71, 0.7)";
+    restartButton.style.transition = "all 0.3s ease-in-out";
+    
+    restartButton.addEventListener("click", () => {
+        score = 0;
+        level = 1;
+        gameOverDiv.style.display = "none";
+        spawnFlies();
+    });
+    
+    gameOverDiv.appendChild(restartButton);
+    gameOverDiv.style.display = "block";
+}
 let flies = [];
-function spawnFlies(count) {
+function spawnFlies() {
     flies = [];
-    for (let i = 0; i < count; i++) {
+    for (let i = 0; i < 10; i++) { // Always spawn 10 flies
         let size = Math.max(40 - (level - 1) * 5, 20);
         let speed = 2 + (level - 1);
         let x = Math.random() * (theCanvas.width - size);
         let y = Math.random() * (theCanvas.height - size);
         flies.push(new Fly(x, y, size, speed));
     }
-    timeLeft = 10;
+    timeLeft = 30; // Set timeLeft to 30 seconds for each level
     clearInterval(timerInterval);
     timerInterval = setInterval(() => {
         timeLeft--;
         scoreDiv.innerHTML = `Puntaje: ${score} | Nivel: ${level} | Tiempo: ${timeLeft}s`;
         if (timeLeft <= 0) {
-            alert("¡Tiempo agotado! Fin del juego.");
-            location.reload();
+            showGameOver(); // Show game over message
         }
     }, 1000);
     updateGame();
 }
+
 
 theCanvas.addEventListener("click", (event) => {
     const rect = theCanvas.getBoundingClientRect();
@@ -134,12 +180,11 @@ theCanvas.addEventListener("click", (event) => {
         return !isHit;
     });
     
-    if (score / 10 >= level) {
+    if (flies.length === 0) { // Check if all flies are eliminated
         level++;
-        spawnFlies(10);
+        spawnFlies(); // Spawn new flies for the next level
     }
 });
-
 function updateGame() {
     ctx.clearRect(0, 0, theCanvas.width, theCanvas.height);
     flies.forEach(fly => {
