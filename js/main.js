@@ -1,8 +1,10 @@
+// Obtiene el elemento canvas y ajusta el tamaño al 80% de la ventana
 let theCanvas = document.getElementById("canvas");
 theCanvas.width = window.innerWidth * 0.8;  
 theCanvas.height = window.innerHeight * 0.8;  
 let ctx = theCanvas.getContext("2d");
 
+// Configuración del fondo de la página con una imagen de cocina
 document.body.style.backgroundImage = "url('cocina.jpg')";
 document.body.style.backgroundSize = "100% 100%";  
 document.body.style.backgroundRepeat = "no-repeat";
@@ -14,8 +16,11 @@ document.body.style.alignItems = "center";
 document.body.style.height = "100vh";
 document.body.style.margin = "0";
 document.body.style.fontFamily = "Arial, sans-serif";
-document.body.style.cursor = "url('mata.png') 25 25, auto";
 
+// Cambia el cursor por un matamoscas personalizado, una imagen
+document.body.style.cursor = "url('mata.png') 50 40, auto";
+
+// Crea un título para el juego
 const title = document.createElement("h1");
 title.innerText = "Juego Moscas";
 title.style.fontSize = "28px";
@@ -25,6 +30,8 @@ title.style.textShadow = "2px 2px 4px #FF4500";
 title.style.marginBottom = "5px";
 document.body.appendChild(title);
 
+
+// Crea un div con las instrucciones del juego
 const instructionsDiv = document.createElement("div");
 instructionsDiv.innerHTML = "Usa el matamoscas para eliminar las moscas.<br>¡Cada mosca eliminada suma 10 puntos!<br>¡Elimina 10 moscas para pasar al siguiente nivel!";
 instructionsDiv.style.fontSize = "24px";
@@ -39,6 +46,7 @@ instructionsDiv.style.textAlign = "center";
 instructionsDiv.style.zIndex = "10";
 document.body.appendChild(instructionsDiv);
 
+// Botón para iniciar el juego
 let startButton = document.createElement("button");
 startButton.innerText = "START";
 startButton.style.fontSize = "20px";
@@ -55,12 +63,14 @@ startButton.style.textShadow = "2px 2px 4px rgba(255, 99, 71, 0.7)";
 startButton.style.transition = "all 0.3s ease-in-out";
 document.body.appendChild(startButton);
 
+// Variables para el juego
 let score = 0;
 let level = 1;
 let timeLeft = 30;
 let timerInterval = null;
 const scoreFont = "30px Arial";
 
+// Muestra el puntaje, nivel y tiempo restante
 let scoreDiv = document.createElement("div");
 scoreDiv.style.position = "absolute";
 scoreDiv.style.top = "10px";
@@ -72,12 +82,15 @@ scoreDiv.style.textShadow = "2px 2px 4px #FF4500";
 scoreDiv.innerHTML = `Puntaje: ${score} | Nivel: ${level} | Tiempo: ${timeLeft}s`;
 document.body.appendChild(scoreDiv);
 
+// Carga la imagen de la mosca y los sonidos del juego
 const flyImage = new Image();
 flyImage.src = "mosca.jpg";
 
+// Sonidos del juego
 const hitSound = new Audio("golpe.mp3");
 const gameOverSound = new Audio("gameover.mp3");
 
+// Clase para las moscas
 class Fly {
     constructor(x, y, size, speed) {
         this.x = x;
@@ -97,6 +110,7 @@ class Fly {
     }
 }
 
+// Div para mostrar el fin del juego
 let gameOverDiv = document.createElement("div");
 gameOverDiv.style.position = "absolute";
 gameOverDiv.style.top = "50%";
@@ -116,16 +130,21 @@ gameOverDiv.style.zIndex = "20";
 gameOverDiv.style.display = "none";
 document.body.appendChild(gameOverDiv);
 
+// Función para mostrar el fin del juego
 function showGameOver() {
     gameOverSound.play();
     backgroundMusic.pause(); //Pausa la música de fondo
     backgroundMusic.currentTime = 0; //Reinicia la música de fondo
-
     flySound.pause();
     flySound.currentTime = 0;
 
-    gameOverDiv.innerHTML = `¡Tiempo agotado!<br>Fin del juego.<br>Puntaje final: ${score}<br>`;
+// Actualiza el mejor puntaje
+    updateHighScore();
     
+// Muestra el fin del juego con el puntaje final y el mejor puntaje
+    gameOverDiv.innerHTML = `¡Tiempo agotado!<br>Fin del juego.<br>Puntaje final: ${score}<br>Mejor puntaje: ${highScore}<br>`;
+    
+// Botón para reiniciar el juego
     let restartButton = document.createElement("button");
     restartButton.innerText = "REINICIAR";
     restartButton.style.fontSize = "20px";
@@ -141,6 +160,7 @@ function showGameOver() {
     restartButton.style.textShadow = "2px 2px 4px rgba(255, 99, 71, 0.7)";
     restartButton.style.transition = "all 0.3s ease-in-out";
 
+ // Reinicia el juego al hacer clic en el botón
     restartButton.addEventListener("click", () => {
         score = 0;
         level = 1;
@@ -153,11 +173,15 @@ function showGameOver() {
     gameOverDiv.style.display = "block";
 }
 
+// Arreglo de moscas
 let flies = [];
 
+// Función para poner sonido de moscas
 const flySound = new Audio("sonidomosca.mp3");
 flySound.loop = true;
-flySound.volume = 0.6;
+flySound.volume = 0.7;
+
+// Función para crear las moscas
 function spawnFlies() {
     flies = [];
     for (let i = 0; i < 10; i++) {
@@ -183,6 +207,7 @@ function spawnFlies() {
     updateGame();
 }
 
+// Detección de clics en las moscas
 theCanvas.addEventListener("click", (event) => {
     const rect = theCanvas.getBoundingClientRect();
     const mouseX = event.clientX - rect.left;
@@ -206,6 +231,19 @@ theCanvas.addEventListener("click", (event) => {
     }
 });
 
+// Actualiza el mejor puntaje y lo guarda de forma local
+let highScore = localStorage.getItem("highScore") || 0;
+
+// Función para actualizar el mejor puntaje
+function updateHighScore() {
+    if (score > highScore) {
+        highScore = score;
+        localStorage.setItem("highScore", highScore);
+    }
+    scoreDiv.innerHTML = `Puntaje: ${score} | Nivel: ${level} | Tiempo: ${timeLeft}s | Mejor puntaje: ${highScore}`;
+}
+
+// Función para actualizar el juego
 function updateGame() {
     ctx.clearRect(0, 0, theCanvas.width, theCanvas.height);
     flies.forEach(fly => {
@@ -215,13 +253,30 @@ function updateGame() {
     requestAnimationFrame(updateGame);
 }
 
+
+// Música de fondo
 const backgroundMusic = new Audio("sonidofondo.mp3");
 backgroundMusic.loop = true;
-backgroundMusic.volume = 0.5;
+backgroundMusic.volume = 0.4;
 
+// Inicia el juego al hacer clic en el botón
 startButton.addEventListener("click", () => {
     instructionsDiv.style.display = "none";
     startButton.style.display = "none";
     backgroundMusic.play(); //Inicia la música de fondo
     spawnFlies();
+
+// Crea un footer con el nombre del desarrollador
+    let footer = document.createElement("footer");
+    footer.innerHTML = "Desarrollado por Brachiel Silva";
+    footer.style.position = "absolute";
+    footer.style.bottom = "10px";
+    footer.style.right = "10px";
+    footer.style.fontSize = "14px";
+    footer.style.color = "white";
+    footer.style.backgroundColor = "rgba(231, 48, 11, 0.6)";
+    footer.style.padding = "5px 10px";
+    footer.style.borderRadius = "5px";
+    footer.style.boxShadow = "2px 2px 5px rgba(253, 249, 6, 0.5)";
+    document.body.appendChild(footer); 
 });
